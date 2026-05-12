@@ -44,6 +44,11 @@ echo "[*] 注入 LSUIElement = true（隐藏 Dock 图标，纯菜单栏 App）"
 /usr/bin/plutil -replace LSUIElement -bool true "$PLIST" 2>/dev/null \
   || /usr/bin/plutil -insert LSUIElement -bool true "$PLIST"
 
+# 修改 Info.plist 会让 PyInstaller 之前打的 ad-hoc 签名失效，
+# 必须重新签一下，否则 macOS 会报 "invalid Info.plist" 并显示"已损坏"。
+echo "[*] 重新 ad-hoc 签名（恢复修改 Info.plist 后失效的签名）..."
+/usr/bin/codesign --force --deep --sign - "$APP_PATH"
+
 # .dmg
 DMG_ROOT="$BUILD_DIR/dmg_root"
 DMG_PATH="$DIST_DIR/$APP_NAME.dmg"
