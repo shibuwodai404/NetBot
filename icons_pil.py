@@ -4,7 +4,7 @@ PIL 图标渲染（用于 Linux / Windows 系统托盘）
 为什么需要这个：
   Win / Linux 的托盘图标旁边不能像 macOS 那样显示文字，
   唯一办法是把国家码直接画进图标。
-  这里生成一个圆角彩色背景 + 三字母国家码的小图。
+  这里生成一个圆角彩色背景 + 三字母国家码的小图，状态靠背景色区分。
 """
 
 import os
@@ -60,7 +60,6 @@ def _load_font(point_size: int) -> ImageFont.ImageFont:
                 return font
             except OSError:
                 continue
-    # 最后兜底：PIL 默认位图字体（尺寸固定，但至少能渲染）
     font = ImageFont.load_default()
     _font_cache[point_size] = font
     return font
@@ -76,7 +75,6 @@ def render_country_icon(
     pystray 直接接受 PIL.Image，不必落盘。
     """
     text = (country_code or "...").strip().upper()
-    # 截断到 3 个字符（三位 ISO 码 / "..."）
     if len(text) > 3:
         text = text[:3]
     bg = STATE_COLORS.get(state, STATE_COLORS["ok"])
@@ -92,8 +90,7 @@ def render_country_icon(
         fill=bg,
     )
 
-    # 居中绘制文字
-    # 字号根据画布大小动态算（约画布高度的 45%）
+    # 居中绘制文字（字号约画布高度的 45%）
     font_size = max(10, int(size * 0.45))
     font = _load_font(font_size)
     bbox = draw.textbbox((0, 0), text, font=font)

@@ -25,6 +25,8 @@ echo "[*] 运行 PyInstaller ..."
   --name "$APP_NAME" \
   --windowed \
   --osx-bundle-identifier "$BUNDLE_ID" \
+  --icon "assets/icons/NetBot.icns" \
+  --add-data "assets:assets" \
   --noconfirm \
   --clean \
   --hidden-import psutil \

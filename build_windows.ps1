@@ -27,6 +27,7 @@ Write-Host "[*] 运行 PyInstaller ..."
     --name $APP_NAME `
     --onefile `
     --windowed `
+    --icon "assets\icons\NetBot.ico" `
     --noconfirm `
     --clean `
     --hidden-import psutil `
