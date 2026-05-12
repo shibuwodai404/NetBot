@@ -1,5 +1,10 @@
 # NetBot
 
+[![Build](https://github.com/shibuwodai404/NetBot/actions/workflows/build.yml/badge.svg)](https://github.com/shibuwodai404/NetBot/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/shibuwodai404/NetBot?display_name=tag)](https://github.com/shibuwodai404/NetBot/releases)
+[![License](https://img.shields.io/github/license/shibuwodai404/NetBot)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue)
+
 > A lightweight tray app that tells you which country your public IP is from, in real time.
 
 一个轻量的跨平台菜单栏 / 系统托盘小工具，实时显示当前网络出口 IP 的归属国家。

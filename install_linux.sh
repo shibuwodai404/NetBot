@@ -12,9 +12,11 @@ ARCH=$(uname -m)
 INSTALL_DIR="${HOME}/.local/bin"
 
 TAR_URL="https://github.com/${REPO}/releases/latest/download/${APP_NAME}-linux-${ARCH}.tar.gz"
-TAR_TMP="$(mktemp -t netbot).tar.gz"
+# 用 mktemp -d 避免 GNU mktemp 对 -t 的不同解释
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/netbot.XXXXXX")"
+TAR_TMP="${TMP_DIR}/${APP_NAME}.tar.gz"
 
-cleanup() { rm -f "$TAR_TMP"; }
+cleanup() { rm -rf "$TMP_DIR"; }
 trap cleanup EXIT
 
 echo "[1/3] 下载 ${APP_NAME}-linux-${ARCH}.tar.gz ..."

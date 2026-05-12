@@ -17,10 +17,11 @@ set -euo pipefail
 REPO="shibuwodai404/NetBot"
 APP_NAME="NetBot"
 DMG_URL="https://github.com/${REPO}/releases/latest/download/${APP_NAME}.dmg"
-DMG_TMP="$(mktemp -t netbot).dmg"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/netbot.XXXXXX")"
+DMG_TMP="${TMP_DIR}/${APP_NAME}.dmg"
 APP_DEST="/Applications/${APP_NAME}.app"
 
-cleanup() { rm -f "$DMG_TMP"; }
+cleanup() { rm -rf "$TMP_DIR"; }
 trap cleanup EXIT
 
 echo "[1/5] 下载最新版 ${APP_NAME}.dmg ..."
