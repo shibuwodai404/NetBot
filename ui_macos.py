@@ -75,24 +75,41 @@ class NetBotApp(rumps.App):
             self.icon = path
 
     def _update_security_menu(self, security: list[dict]):
-        """根据 4 项检测结果刷新「🔒 安全检测」子菜单。"""
+        """
+        根据 4 项检测结果刷新「🔒 安全检测」子菜单。
+        critical 项前缀 🔐（隐私风险，会切 ok_risk），info 项前缀 ℹ️（仅提示）。
+        顶层 summary 只统计 critical 风险。
+        """
         if not security:
             self.item_security.title = "🔒 安全检测：—"
             for child in self._security_children:
                 child.title = "—"
             return
 
-        risks = [r for r in security if not r.get("ok", True)]
-        if risks:
-            self.item_security.title = f"🔒 安全检测：⚠️ {len(risks)} 项风险"
+        critical_risks = [
+            r for r in security
+            if not r.get("ok", True) and r.get("severity") == "critical"
+        ]
+        info_notes = [
+            r for r in security
+            if not r.get("ok", True) and r.get("severity") == "info"
+        ]
+        if critical_risks:
+            self.item_security.title = f"🔒 安全检测：⚠️ {len(critical_risks)} 项隐私风险"
+        elif info_notes:
+            self.item_security.title = f"🔒 安全检测：✅ 无隐私泄露（{len(info_notes)} 项提示）"
         else:
             self.item_security.title = "🔒 安全检测：✅ 全部通过"
 
         for i, child in enumerate(self._security_children):
             if i < len(security):
                 r = security[i]
-                mark = "✅" if r.get("ok") else "⚠️"
-                child.title = f"{mark} {r['label']}：{r['detail']}"
+                ok = r.get("ok", True)
+                sev = r.get("severity", "info")
+                # 严重级图标 + 该项结果图标
+                sev_icon = "🔐" if sev == "critical" else "ℹ️"
+                result_icon = "✅" if ok else "⚠️"
+                child.title = f"{sev_icon} {result_icon} {r['label']}：{r['detail']}"
             else:
                 child.title = "—"
 

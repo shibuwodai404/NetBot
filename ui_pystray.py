@@ -68,16 +68,22 @@ class NetBotTray:
         results = self._security_list()
         if not results:
             return "🔒 安全检测：…"
-        risks = [r for r in results if not r.get("ok", True)]
-        return f"🔒 安全检测：⚠️ {len(risks)} 项风险" if risks else "🔒 安全检测：✅ 全部通过"
+        critical = [r for r in results if not r.get("ok", True) and r.get("severity") == "critical"]
+        info = [r for r in results if not r.get("ok", True) and r.get("severity") == "info"]
+        if critical:
+            return f"🔒 安全检测：⚠️ {len(critical)} 项隐私风险"
+        if info:
+            return f"🔒 安全检测：✅ 无隐私泄露（{len(info)} 项提示）"
+        return "🔒 安全检测：✅ 全部通过"
 
     def _security_line(self, idx: int) -> str:
         results = self._security_list()
         if idx >= len(results):
             return "—"
         r = results[idx]
-        mark = "✅" if r.get("ok") else "⚠️"
-        return f"{mark} {r['label']}：{r['detail']}"
+        sev_icon = "🔐" if r.get("severity") == "critical" else "ℹ️"
+        result_icon = "✅" if r.get("ok") else "⚠️"
+        return f"{sev_icon} {result_icon} {r['label']}：{r['detail']}"
 
     def _format_location(self) -> str:
         country = self._info.get("country_name") or "Unknown"

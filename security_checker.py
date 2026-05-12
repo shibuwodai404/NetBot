@@ -1,17 +1,19 @@
 """
 网络安全检测模块
 
-四项检测：
-  1. DNS leak       —— 用 Cloudflare 1.1.1.1 直连查 whoami 服务，得到出口 DNS resolver IP，
-                       拿它的归属国 vs 公网 IP 的归属国比较
-  2. IPv6 leak      —— 请求 IPv6-only 端点，看是否能拿到 IPv6 地址；
-                       如果能拿到且不属于 VPN 端，说明 VPN 没接管 IPv6
-  3. IP reputation  —— 调用 ipapi.is 匿名接口（免费 1000/日），看 IP 是否被标记 VPN/proxy/tor/datacenter
-  4. Geo consistency—— 系统时区 / locale 与 IP 归属国比对，差距大就提示
+四项检测，两档严重级：
+
+  critical（影响 ok_risk 状态切换）—— 真实身份泄露
+    1. DNS leak   —— 解析器出口国 vs 公网 IPv4 出口国
+    2. IPv6 leak  —— IPv6 回声国 vs 公网 IPv4 出口国
+
+  info（仅菜单提示，不影响图标）—— 与身份泄露无关，是"被网站识破/限流"问题
+    3. IP reputation   —— ipapi.is 看是否被标 VPN/proxy/tor/datacenter
+    4. Geo consistency —— 系统时区 / locale 与 IP 归属国是否吻合
 
 设计：
   · 每项独立、可单独失败 —— 一项查不动不影响其它三项
-  · 全部返回 {key, ok, label, detail}，UI 直接展示
+  · 全部返回 {key, severity, ok, label, detail}
   · 不抛异常（出错就 ok=True 且 detail="未能检测"，避免误报）
   · 所有 HTTP / DNS 都有 3 秒超时，不卡 UI
 """
@@ -91,34 +93,60 @@ def check_dns_leak(public_ip_country_iso2: str) -> dict:
     }
 
 
-def check_ipv6_leak() -> dict:
+def check_ipv6_leak(public_ip_country_iso2: str) -> dict:
     """
-    主动请求 IPv6-only 端点。
-      · 拿到 IPv6 地址 → 本机有 IPv6 出口，但 VPN 通常只接管 IPv4 →
-        访问支持 IPv6 的网站时会 *绕过 VPN* 直连，暴露真实 IPv6
-      · 请求失败（连接拒绝 / 超时）→ 没有 IPv6 出口，没有泄露
+    请求 IPv6-only 端点，把回声的 IPv6 归属国与 IPv4 归属国比对。
+
+    机场用户的现实：很多 VPN 客户端会创虚拟接口 utun*，关 Wi-Fi 服务的
+    IPv6 也禁不掉它。但只要 IPv6 走的是 *VPN 出口*（与 IPv4 同国别），
+    就不算泄露。
+
+      · 拿不到 IPv6                    → 无 IPv6 出口，安全
+      · 拿到 IPv6 且归属国 == IPv4 国别 → IPv6 也走 VPN，安全
+      · 拿到 IPv6 但归属国 ≠ IPv4 国别 → 真泄露：IPv6 没走 VPN
     """
+    ipv6_addr: Optional[str] = None
     for url in IPV6_ECHO_ENDPOINTS:
         try:
             resp = requests.get(url, timeout=REQUEST_TIMEOUT)
             if resp.status_code == 200:
-                ipv6 = resp.text.strip()
-                if ":" in ipv6:
-                    return {
-                        "key": "ipv6_leak",
-                        "ok": False,
-                        "label": "IPv6 泄露",
-                        "detail": f"本机有 IPv6 出口 ({ipv6})，VPN 通常只走 IPv4，请在 VPN 客户端禁用 IPv6 或全局屏蔽",
-                    }
+                candidate = resp.text.strip()
+                if ":" in candidate:
+                    ipv6_addr = candidate
+                    break
         except requests.RequestException:
             continue
 
-    # 全部失败 = 没有 IPv6 出口 = 安全
+    if not ipv6_addr:
+        return {
+            "key": "ipv6_leak",
+            "ok": True,
+            "label": "IPv6 泄露",
+            "detail": "无 IPv6 出口",
+        }
+
+    ipv6_country = _quick_country(ipv6_addr)
+    public_country = (public_ip_country_iso2 or "").upper()
+
+    if ipv6_country and public_country and ipv6_country.upper() == public_country:
+        return {
+            "key": "ipv6_leak",
+            "ok": True,
+            "label": "IPv6 泄露",
+            "detail": f"IPv6 也走 VPN（{ipv6_addr} → {ipv6_country}）",
+        }
+
+    if not ipv6_country:
+        return _skipped(
+            "ipv6_leak", "IPv6 泄露",
+            f"IPv6 ({ipv6_addr}) 归属查询失败，无法判断是否走 VPN",
+        )
+
     return {
         "key": "ipv6_leak",
-        "ok": True,
+        "ok": False,
         "label": "IPv6 泄露",
-        "detail": "无 IPv6 出口",
+        "detail": f"IPv6 在 {ipv6_country}，但公网 IPv4 在 {public_country or '?'} —— IPv6 没走 VPN",
     }
 
 
@@ -203,22 +231,37 @@ def check_geo_consistency(public_ip_country_iso2: str) -> dict:
 
 # ============== 顶层入口 ==============
 
+# 严重级映射：critical 才会触发 ok_risk 状态切换
+SEVERITY = {
+    "dns_leak":        "critical",
+    "ipv6_leak":       "critical",
+    "ip_reputation":   "info",
+    "geo_consistency": "info",
+}
+
+
 def run_all_checks(ip: str, country_iso2: str) -> list[dict]:
     """
-    执行全部四项检测，返回列表。出错的项会被跳过（标 ok=True、detail=理由）。
-    UI 直接遍历这个列表展示。
+    执行全部四项检测，返回列表。每个结果都带 severity 字段。
+    顺序：先 critical 再 info，UI 按这个顺序渲染。
     """
-    return [
+    raw = [
         check_dns_leak(country_iso2),
-        check_ipv6_leak(),
+        check_ipv6_leak(country_iso2),
         check_ip_reputation(ip),
         check_geo_consistency(country_iso2),
     ]
+    for r in raw:
+        r["severity"] = SEVERITY.get(r.get("key", ""), "info")
+    return raw
 
 
 def has_risk(results: list[dict]) -> bool:
-    """任一项 ok=False 即视为有风险。"""
-    return any(not r.get("ok", True) for r in results)
+    """只有 severity=critical 且 ok=False 的项才算"风险"（驱动 ok_risk 状态）。"""
+    return any(
+        not r.get("ok", True) and r.get("severity") == "critical"
+        for r in results
+    )
 
 
 # ============== 工具函数 ==============
