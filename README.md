@@ -36,12 +36,13 @@ NetBot 常驻菜单栏 / 系统托盘，实时显示当前公网 IP 的归属国
 
 | 图标 | 状态 | 含义 |
 |---|---|---|
-| <img src="assets/icons/app/icon_ok_256.png" width="48" />      | **ok**       | 联网正常，且 4 项隐私检测全部通过 |
-| <img src="assets/icons/app/icon_ok_risk_256.png" width="48" /> | **ok_risk**  | 联网正常，但至少 1 项隐私检测发现风险 |
-| <img src="assets/icons/app/icon_checking_256.png" width="48" />| **checking** | 正在检测网络 / 切换中 |
-| <img src="assets/icons/app/icon_error_256.png" width="48" />   | **error**    | 网络异常，无法获取公网 IP |
+| <img src="assets/icons/app/icon_ok_256.png" width="48" />      | **ok**       | 联网正常，且 4 项隐私检测全部通过（站立机器人） |
+| <img src="assets/icons/app/icon_ok_risk_256.png" width="48" /> | **ok_risk**  | 联网正常，但至少 1 项隐私检测发现风险（坐姿机器人） |
+| 🔄                                                              | **checking** | 正在检测网络 / 切换中（循环箭头） |
+| ⚠️                                                              | **error**    | 网络异常，无法获取公网 IP（警告三角） |
 
-> macOS 菜单栏使用单色 template 版本，会自动反色适配深 / 浅外观；Linux / Windows 托盘把国家码画进图标，状态用背景色区分（绿 / 橙 / 黄 / 红）。
+> macOS 菜单栏：`ok` / `ok_risk` 用机器人 template（自动反色适配深 / 浅外观）；`checking` / `error` 用 SF Symbol（系统矢量图标，形状不会被颜色误导）。  
+> Linux / Windows 托盘：把国家码画进图标，4 种状态用背景色区分（绿 / 橙 / 黄 / 红）。
 
 ---
 
