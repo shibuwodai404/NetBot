@@ -132,6 +132,13 @@ GNOME 用户额外要装 [AppIndicator 扩展](https://extensions.gnome.org/exte
 
 ---
 
+## 🔄 升级
+
+- **macOS / Linux**：再跑一次同样的一键安装命令即可。脚本会自动退掉正在运行的旧版本、装新版、重启。
+- **Windows**：托盘图标右键 → 退出，下载新 `NetBot.exe` 覆盖原来的位置 → 双击。
+
+---
+
 ## 📜 License
 
 [MIT](LICENSE)
