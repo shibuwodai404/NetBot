@@ -1,0 +1,113 @@
+name: build
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # =================== macOS ===================
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+
+      - name: 构建 .app / .dmg / .zip
+        run: |
+          chmod +x build_macos.sh
+          ./build_macos.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NetBot-macos
+          path: |
+            dist/NetBot.dmg
+            dist/NetBot.zip
+          if-no-files-found: error
+
+  # =================== Linux ===================
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装系统依赖（AppIndicator）
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libayatana-appindicator3-1 \
+            gir1.2-ayatanaappindicator3-0.1 \
+            libgirepository1.0-dev
+
+      - name: 构建 Linux 二进制
+        run: |
+          chmod +x build_linux.sh
+          ./build_linux.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NetBot-linux
+          path: dist/NetBot-linux-*.tar.gz
+          if-no-files-found: error
+
+  # =================== Windows ===================
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 构建 .exe / .zip
+        run: .\build_windows.ps1
+        shell: pwsh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NetBot-windows
+          path: |
+            dist/NetBot.exe
+            dist/NetBot-windows-x64.zip
+          if-no-files-found: error
+
+  # =================== 发 Release（仅 tag 触发） ===================
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: 整理产物
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name '*.dmg' -o -name '*.zip' -o -name '*.tar.gz' -o -name '*.exe' \) \
+            -exec cp {} release/ \;
+          ls -lh release/
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true

@@ -1,0 +1,11 @@
+# 跨平台核心依赖
+requests>=2.31.0
+psutil>=5.9.0
+pyinstaller>=6.0.0
+
+# macOS：用 rumps（PyObjC 已作为间接依赖被装好）
+rumps>=0.4.0; sys_platform == "darwin"
+
+# Windows / Linux：用 pystray + Pillow 渲染托盘图标
+pystray>=0.19.5; sys_platform != "darwin"
+Pillow>=10.0.0; sys_platform != "darwin"
