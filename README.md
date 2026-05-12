@@ -33,7 +33,7 @@
 | 下载 | `NetBot.dmg`（推荐） 或 `NetBot.zip` |
 | 安装 | 双击 `.dmg` 挂载 → 把 `NetBot.app` 拖到 `Applications` |
 | 界面 | 菜单栏左侧 SF Symbol 图标 + 右侧三字母国家码 |
-| 首次打开 | 未签名，Gatekeeper 会拦一下。右键点 NetBot → 选「打开」→ 弹窗里再点「打开」（一次性）。<br/>或命令行：`xattr -dr com.apple.quarantine /Applications/NetBot.app` |
+| 首次打开 | 未签名，Gatekeeper 会拦截并谎称「文件已损坏」（其实没坏）。<br/>**最稳的修复**（终端跑一行）：<br/>`xattr -dr com.apple.quarantine /Applications/NetBot.app`<br/>跑完双击即可正常打开。<br/><br/>新版 macOS 上，「右键 → 打开」的旧办法对下载来的未签名 App 经常无效，弹窗里没有"仍要打开"按钮，必须用上面这条 `xattr` 命令。 |
 | 系统要求 | macOS 11 Big Sur 及以上 |
 
 ### 🐧 Linux
