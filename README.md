@@ -28,21 +28,60 @@
 
 ### 🍎 macOS
 
+**推荐：一键安装（零配置，自动处理 Apple Gatekeeper）**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shibuwodai404/NetBot/main/install_macos.sh | bash
+```
+
+脚本会用 curl 下载（避开浏览器的 quarantine 标记）、安装到 `/Applications`、自动撕掉签名标记、启动 NetBot。完事后菜单栏右上角直接出图标，零额外操作。
+
+<details>
+<summary>手动安装（如果不放心跑别人的脚本）</summary>
+
+| 步骤 | 操作 |
+|---|---|
+| 下载 | 从 [Releases](../../releases) 下载 `NetBot.dmg` |
+| 安装 | 双击 `.dmg` 挂载 → 把 `NetBot.app` 拖到 `Applications` |
+| 撕 quarantine | 终端跑：`xattr -dr com.apple.quarantine /Applications/NetBot.app`<br/>**这一步是必须的**：浏览器下载会被 Apple 加 quarantine 标记，未签名 App 会被谎报"已损坏"。这是 Apple 政策，不是 NetBot 的 bug。 |
+| 启动 | `open /Applications/NetBot.app` 或 Launchpad 双击 |
+</details>
+
 | 项目 | 内容 |
 |---|---|
-| 下载 | `NetBot.dmg`（推荐） 或 `NetBot.zip` |
-| 安装 | 双击 `.dmg` 挂载 → 把 `NetBot.app` 拖到 `Applications` |
 | 界面 | 菜单栏左侧 SF Symbol 图标 + 右侧三字母国家码 |
-| 首次打开 | 未签名，Gatekeeper 会拦截并谎称「文件已损坏」（其实没坏）。<br/>**最稳的修复**（终端跑一行）：<br/>`xattr -dr com.apple.quarantine /Applications/NetBot.app`<br/>跑完双击即可正常打开。<br/><br/>新版 macOS 上，「右键 → 打开」的旧办法对下载来的未签名 App 经常无效，弹窗里没有"仍要打开"按钮，必须用上面这条 `xattr` 命令。 |
 | 系统要求 | macOS 11 Big Sur 及以上 |
+| 为什么需要这一步？ | NetBot 未做 Apple Developer 签名（$99/年）。如需完全免除任何安装手脚，欢迎赞助证书费用 :) |
 
 ### 🐧 Linux
 
+**推荐：一键安装**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shibuwodai404/NetBot/main/install_linux.sh | bash
+```
+
+脚本会下载对应架构的 tar.gz、解压到 `~/.local/bin/NetBot`、后台启动。
+
+<details>
+<summary>手动安装</summary>
+
+```bash
+# 1. 下载（替换 x86_64 为你的实际架构 uname -m）
+curl -fL -o NetBot.tar.gz \
+  https://github.com/shibuwodai404/NetBot/releases/latest/download/NetBot-linux-x86_64.tar.gz
+
+# 2. 解压并安装
+tar -xzf NetBot.tar.gz
+mv NetBot ~/.local/bin/  # 或 /usr/local/bin/
+
+# 3. 启动
+NetBot &
+```
+</details>
+
 | 项目 | 内容 |
 |---|---|
-| 下载 | `NetBot-linux-x86_64.tar.gz` |
-| 安装 | `tar -xzf NetBot-linux-x86_64.tar.gz && mv NetBot ~/.local/bin/` |
-| 启动 | `NetBot &` 或加到「自启动应用」 |
 | 界面 | 系统托盘里 64×64 圆角彩色图标，三字母国家码画在图标内部 |
 | 系统要求 | 桌面环境需支持 AppIndicator：<br/>`sudo apt install libayatana-appindicator3-1 gir1.2-ayatanaappindicator3-0.1`<br/>GNOME 用户需开启 [AppIndicator 扩展](https://extensions.gnome.org/extension/615/appindicator-support/) |
 
@@ -50,10 +89,10 @@
 
 | 项目 | 内容 |
 |---|---|
-| 下载 | `NetBot-windows-x64.zip` |
+| 下载 | 从 [Releases](../../releases) 下载 `NetBot-windows-x64.zip` |
 | 安装 | 解压后双击 `NetBot.exe`（建议放固定目录，加入「启动」文件夹可开机自启） |
+| 首次打开 | 未签名，SmartScreen 会弹"Windows 已保护你的电脑"。点「更多信息」→「仍要运行」（一次性） |
 | 界面 | 任务栏托盘 64×64 圆角彩色图标，三字母国家码画在图标内部，悬停查看完整信息 |
-| 首次打开 | 未签名，SmartScreen 会拦一下。点「更多信息」→「仍要运行」（一次性） |
 | 系统要求 | Windows 10 及以上 |
 
 ---
