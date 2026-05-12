@@ -6,16 +6,17 @@
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue)
 
 <p align="center">
-  <img src="assets/icons/app/icon_ok_256.png"       alt="ok"       width="120" />
-  <img src="assets/icons/app/icon_checking_256.png" alt="checking" width="120" />
-  <img src="assets/icons/app/icon_error_256.png"    alt="error"    width="120" />
+  <img src="assets/icons/app/icon_ok_256.png"       alt="ok"       width="100" />
+  <img src="assets/icons/app/icon_ok_risk_256.png"  alt="ok_risk"  width="100" />
+  <img src="assets/icons/app/icon_checking_256.png" alt="checking" width="100" />
+  <img src="assets/icons/app/icon_error_256.png"    alt="error"    width="100" />
 </p>
 
-<p align="center"><sub>正常 · 检测中 · 异常</sub></p>
+<p align="center"><sub>正常 · 隐私风险 · 检测中 · 异常</sub></p>
 
-> A lightweight tray app that tells you which country your public IP is from, in real time.
+> A lightweight tray app that tells you which country your public IP is from, in real time — with built-in privacy leak checks.
 
-NetBot 常驻菜单栏 / 系统托盘，实时显示当前公网 IP 的归属国家。适合代理 / VPN 用户随时确认「自己现在到底从哪里上网」。
+NetBot 常驻菜单栏 / 系统托盘，实时显示当前公网 IP 的归属国家，并主动检测 DNS / IPv6 / IP 信誉 / 地理一致性等 **隐私泄露信号**。适合代理 / VPN 用户随时确认「自己现在到底从哪里上网，以及暴露了什么」。
 
 支持 **🍎 macOS · 🐧 Linux · 🪟 Windows**。
 
@@ -24,9 +25,49 @@ NetBot 常驻菜单栏 / 系统托盘，实时显示当前公网 IP 的归属国
 ## ✨ 它能干什么
 
 - 一眼看到三字母国家码（`USA` / `CHN` / `JPN` / `SGP` ...）
-- 三种状态：🟢 正常 · 🟡 检测中 / 切换中 · 🔴 异常
-- 点开看完整 IP、城市、ISP、最后更新时间
+- 四种状态用机器人姿势 / 形状区分，不靠颜色（详见下表）
+- 自动跑 **4 项隐私检测**，发现泄露时机器人切换姿势提醒
+- 点开看完整 IP、城市、ISP、安全检测详情
 - 切换 VPN / Wi-Fi 时立刻自动重新检测，不用等
+
+---
+
+## 🤖 四种状态
+
+| 图标 | 状态 | 含义 |
+|---|---|---|
+| <img src="assets/icons/app/icon_ok_256.png" width="48" />      | **ok**       | 联网正常，且 4 项隐私检测全部通过 |
+| <img src="assets/icons/app/icon_ok_risk_256.png" width="48" /> | **ok_risk**  | 联网正常，但至少 1 项隐私检测发现风险 |
+| <img src="assets/icons/app/icon_checking_256.png" width="48" />| **checking** | 正在检测网络 / 切换中 |
+| <img src="assets/icons/app/icon_error_256.png" width="48" />   | **error**    | 网络异常，无法获取公网 IP |
+
+> macOS 菜单栏使用单色 template 版本，会自动反色适配深 / 浅外观；Linux / Windows 托盘把国家码画进图标，状态用背景色区分（绿 / 橙 / 黄 / 红）。
+
+---
+
+## 🔒 隐私检测
+
+NetBot 在每次拿到新 IP 时自动跑 4 项检测，结果在下拉菜单 **「🔒 安全检测」** 里展开：
+
+| 项 | 检测什么 |
+|---|---|
+| **DNS 泄露** | 你正在用的 DNS 解析器是否走 VPN —— 没走的话，本地 / ISP 的 DNS 服务器能看到你查询的每个域名 |
+| **IPv6 泄露** | 本机是否有 IPv6 出口 —— 多数廉价机场只接管 IPv4，访问支持 IPv6 的网站时会 *绕过 VPN* 暴露真实地址 |
+| **IP 信誉** | 出口 IP 是否被标为 VPN / 代理 / Tor / 数据中心 —— 被标了不影响安全，但很多网站会加验证码或拒服务 |
+| **地理一致性** | IP 国别 vs 系统时区 / locale 是否一致 —— 不一致时浏览器 Accept-Language + JS 时区会暴露"你其实在哪" |
+
+### 边界声明
+
+这些是 **"客户端能检测的隐私泄露信号"**，不是 IDS / 入侵检测。NetBot **无法**回答以下问题：
+
+- 是否有人在反向追踪你 → 需要网络嗅探设备
+- 你的 VPN 服务商是否在记录访问 → 客户端无从验证
+- 流量是否被中间人篡改 → 需要为每个目标做证书固定
+
+### 数据流向
+
+- **DNS / IPv6 / 地理一致性** —— 全部本地完成，不出本机
+- **IP 信誉** —— 调用 [ipapi.is](https://ipapi.is) 匿名接口（1000 次/日免费额度），只发送公网 IP，不带其他信息
 
 ---
 

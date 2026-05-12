@@ -16,6 +16,8 @@ from typing import Optional, Callable
 import requests
 import psutil
 
+from security_checker import run_all_checks, has_risk
+
 # ============== 配置区（可自由修改） ==============
 
 # 公网 IP 探测端点：返回纯文本 IP，体量极小
@@ -201,10 +203,9 @@ class NetworkMonitor:
         return None
 
     def _fetch_ip_info(self, ip: str) -> Optional[dict]:
-        """调用 ipinfo.io 获取归属地详情。"""
+        """调用 ipinfo.io 获取归属地详情，并跑安全检测。"""
         url = IPINFO_ENDPOINT.format(ip=ip)
         headers = {"Accept": "application/json"}
-        # 可选 token
         token = os.environ.get(IPINFO_TOKEN_ENV)
         params = {"token": token} if token else None
 
@@ -217,7 +218,7 @@ class NetworkMonitor:
             return None
 
         country_iso2 = data.get("country", "")
-        return {
+        info = {
             "ip": data.get("ip", ip),
             "country_iso2": country_iso2,
             "country_iso3": iso2_to_iso3(country_iso2),
@@ -227,6 +228,12 @@ class NetworkMonitor:
             "org": data.get("org", ""),
             "updated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
+
+        # 跑四项安全检测；4-10 秒，与 IP 一起缓存，IP 没变就不重跑
+        security = run_all_checks(ip=info["ip"], country_iso2=country_iso2)
+        info["security"] = security
+        info["state"] = "ok_risk" if has_risk(security) else "ok"
+        return info
 
     # ---------- 工具方法 ----------
 

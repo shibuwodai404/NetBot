@@ -42,15 +42,42 @@ class NetBotTray:
     # ---------- 菜单构建（label 用 lambda 支持动态文案） ----------
 
     def _build_menu(self) -> pystray.Menu:
+        # 安全检测子菜单：4 个槽位，按结果动态渲染
+        security_submenu = pystray.Menu(
+            pystray.MenuItem(lambda _i: self._security_line(0), None, enabled=False),
+            pystray.MenuItem(lambda _i: self._security_line(1), None, enabled=False),
+            pystray.MenuItem(lambda _i: self._security_line(2), None, enabled=False),
+            pystray.MenuItem(lambda _i: self._security_line(3), None, enabled=False),
+        )
         return pystray.Menu(
             pystray.MenuItem(lambda _i: f"IP: {self._info.get('ip', '...')}", None, enabled=False),
             pystray.MenuItem(lambda _i: f"地区: {self._format_location()}", None, enabled=False),
             pystray.MenuItem(lambda _i: f"ISP: {self._info.get('org') or '---'}", None, enabled=False),
             pystray.MenuItem(lambda _i: f"更新时间: {self._info.get('updated_at', '---')}", None, enabled=False),
             pystray.Menu.SEPARATOR,
+            pystray.MenuItem(lambda _i: self._security_summary(), security_submenu),
+            pystray.Menu.SEPARATOR,
             pystray.MenuItem("立即刷新", self._on_refresh),
             pystray.MenuItem("退出", self._on_quit),
         )
+
+    def _security_list(self) -> list:
+        return self._info.get("security") or []
+
+    def _security_summary(self) -> str:
+        results = self._security_list()
+        if not results:
+            return "🔒 安全检测：…"
+        risks = [r for r in results if not r.get("ok", True)]
+        return f"🔒 安全检测：⚠️ {len(risks)} 项风险" if risks else "🔒 安全检测：✅ 全部通过"
+
+    def _security_line(self, idx: int) -> str:
+        results = self._security_list()
+        if idx >= len(results):
+            return "—"
+        r = results[idx]
+        mark = "✅" if r.get("ok") else "⚠️"
+        return f"{mark} {r['label']}：{r['detail']}"
 
     def _format_location(self) -> str:
         country = self._info.get("country_name") or "Unknown"
@@ -83,7 +110,7 @@ class NetBotTray:
     def _handle_update(self, info: dict):
         self._info = info
         self._country = info.get("country_iso3", "---") or "---"
-        self._state = "ok"
+        self._state = info.get("state", "ok")
         self._refresh_icon()
 
     def _handle_error(self, msg: str):
