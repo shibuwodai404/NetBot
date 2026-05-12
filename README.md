@@ -5,6 +5,14 @@
 [![License](https://img.shields.io/github/license/shibuwodai404/NetBot)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue)
 
+<p align="center">
+  <img src="assets/icons/app/icon_ok_256.png"       alt="ok"       width="120" />
+  <img src="assets/icons/app/icon_checking_256.png" alt="checking" width="120" />
+  <img src="assets/icons/app/icon_error_256.png"    alt="error"    width="120" />
+</p>
+
+<p align="center"><sub>正常 · 检测中 · 异常</sub></p>
+
 > A lightweight tray app that tells you which country your public IP is from, in real time.
 
 NetBot 常驻菜单栏 / 系统托盘，实时显示当前公网 IP 的归属国家。适合代理 / VPN 用户随时确认「自己现在到底从哪里上网」。
